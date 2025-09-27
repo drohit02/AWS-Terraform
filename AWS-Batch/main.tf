@@ -134,6 +134,7 @@ resource "aws_security_group" "sg_for_batch_service" {
   }
 
   egress {
+
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -315,11 +316,11 @@ resource "aws_cloudwatch_log_group" "cloudwatch_log_for_java_microservice_batch"
 
 # Creating the compute envrionement for the java microservice batch
 resource "aws_batch_compute_environment" "java_microservice_batch_compute_environment" {
-  compute_environment_name = "${var.organization}-${var.environment}-java-microservice-batch-compute-env"
-  type                     = "MANAGED"
-  state                    = "ENABLED"
-  service_role             = aws_iam_role.batch_service_role.arn
-  depends_on               = [aws_iam_role_policy_attachment.ecs_full_access_policy_attachment]
+  name         = "${var.organization}-${var.environment}-java-microservice-batch-compute-env"
+  type         = "MANAGED"
+  state        = "ENABLED"
+  service_role = aws_iam_role.batch_service_role.arn
+  depends_on   = [aws_iam_role_policy_attachment.ecs_full_access_policy_attachment]
 
   compute_resources {
     type                = "EC2"
@@ -407,12 +408,11 @@ resource "aws_cloudwatch_log_group" "cloudwatch_log_for_python_microservice_batc
 
 # Compute Environment for Python Microservice
 resource "aws_batch_compute_environment" "python_microservice_batch_compute_environment" {
-  compute_environment_name = "${var.organization}-${var.environment}-python-microservice-batch-compute-env"
-  type                     = "MANAGED"
-  state                    = "ENABLED"
-  service_role             = aws_iam_role.batch_service_role.arn
-  depends_on               = [aws_iam_role_policy_attachment.ecs_full_access_policy_attachment]
-
+  name         = "${var.organization}-${var.environment}-python-microservice-batch-compute-env"
+  type         = "MANAGED"
+  state        = "ENABLED"
+  service_role = aws_iam_role.batch_service_role.arn
+  depends_on   = [aws_iam_role_policy_attachment.ecs_full_access_policy_attachment]
   compute_resources {
     type                = "EC2"
     allocation_strategy = "BEST_FIT_PROGRESSIVE"
