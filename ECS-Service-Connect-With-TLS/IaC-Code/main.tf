@@ -12,7 +12,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-2"
+  region = "ap-south-1"
 }
 
 ##################################  VPC-Resources  ##################################
@@ -23,7 +23,7 @@ data "aws_vpc" "default_vpc" {
 
 # Create default subnet 1 (without cidr_block and vpc_id)
 resource "aws_default_subnet" "default_subnet_1" {
-  availability_zone = "us-east-2a"
+  availability_zone = "ap-south-1a"
 
   tags = {
     Name = "default-subnet-1"
@@ -32,7 +32,7 @@ resource "aws_default_subnet" "default_subnet_1" {
 
 # Create default subnet 2 (without cidr_block and vpc_id)
 resource "aws_default_subnet" "default_subnet_2" {
-  availability_zone = "us-east-2b"
+  availability_zone = "ap-south-1b"
 
   tags = {
     Name = "default-subnet-2"
@@ -43,7 +43,7 @@ resource "aws_default_subnet" "default_subnet_2" {
 resource "aws_subnet" "private_subnet_1" {
   vpc_id                  = data.aws_vpc.default_vpc.id
   cidr_block              = "172.31.48.0/20"
-  availability_zone       = "us-east-2b"
+  availability_zone       = "ap-south-1b"
   map_public_ip_on_launch = false
   tags = {
     Name = "private-subnet-1"
@@ -54,7 +54,7 @@ resource "aws_subnet" "private_subnet_1" {
 resource "aws_subnet" "private_subnet_2" {
   vpc_id                  = data.aws_vpc.default_vpc.id
   cidr_block              = "172.31.64.0/20"
-  availability_zone       = "us-east-2a"
+  availability_zone       = "ap-south-1a"
   map_public_ip_on_launch = false
   tags = {
     Name = "private-subnet-2"
@@ -564,6 +564,7 @@ resource "aws_ecs_task_definition" "fargate-task-service-a" {
         {
           containerPort = 8201
           name          = "service-a-port"
+          protocol      = "tcp"
           appProtocol   = "http"
         }
       ]
@@ -576,7 +577,7 @@ resource "aws_ecs_task_definition" "fargate-task-service-a" {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs.name
-          awslogs-region        = "us-east-2"
+          awslogs-region        = "ap-south-1"
           awslogs-stream-prefix = "ecs"
         }
       }
@@ -584,7 +585,6 @@ resource "aws_ecs_task_definition" "fargate-task-service-a" {
       environment = [
         { name = "SERVICE_NAME", value = "service-a" },
         { name = "SERVER_PORT", value = "8201" },
-        { name = "SERVER_SSL_ENABLED", value = "true" },
         { name = "SERVICE_B_URL", value = "http://service-b-sc:8202/service-b/status" }
       ]
     }
@@ -610,6 +610,7 @@ resource "aws_ecs_task_definition" "fargate-task-service-b" {
         {
           containerPort = 8202
           name          = "service-b-port"
+          protocol      = "tcp"
           appProtocol   = "http"
         }
       ]
@@ -622,7 +623,7 @@ resource "aws_ecs_task_definition" "fargate-task-service-b" {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs.name
-          awslogs-region        = "us-east-2"
+          awslogs-region        = "ap-south-1"
           awslogs-stream-prefix = "ecs"
         }
       }
@@ -630,7 +631,6 @@ resource "aws_ecs_task_definition" "fargate-task-service-b" {
       environment = [
         { name = "SERVICE_NAME", value = "service-b" },
         { name = "SERVER_PORT", value = "8202" },
-        { name = "SERVER_SSL_ENABLED", value = "true" },
         { name = "SERVICE_A_URL", value = "http://service-a-sc:8201/service-a/status" }
       ]
     }
@@ -644,6 +644,7 @@ resource "aws_ecs_service" "ecs_service_a" {
   task_definition = aws_ecs_task_definition.fargate-task-service-a.arn
   launch_type     = "FARGATE"
   desired_count   = 1
+  enable_execute_command = true
 
   depends_on = [aws_alb.load_balancer, aws_lb_target_group.service_a_tg, aws_lb_listener_rule.service_a, aws_iam_role_policy_attachment.ecs_service_connect_tls_policy_attachment]
 
@@ -673,7 +674,6 @@ resource "aws_ecs_service" "ecs_service_a" {
       
       client_alias {
         port     = 8201
-        dns_name = "service-a-sc"
       }
       
       tls {
@@ -693,6 +693,7 @@ resource "aws_ecs_service" "ecs_service_b" {
   task_definition = aws_ecs_task_definition.fargate-task-service-b.arn
   launch_type     = "FARGATE"
   desired_count   = 1
+  enable_execute_command = true
 
   depends_on = [aws_alb.load_balancer, aws_lb_target_group.service_b_tg, aws_lb_listener_rule.service_b, aws_iam_role_policy_attachment.ecs_service_connect_tls_policy_attachment]
 
@@ -722,7 +723,6 @@ resource "aws_ecs_service" "ecs_service_b" {
       
       client_alias {
         port     = 8202
-        dns_name = "service-b-sc"
       }
       
       tls {
