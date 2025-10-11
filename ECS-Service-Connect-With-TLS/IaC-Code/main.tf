@@ -407,9 +407,9 @@ resource "aws_lb_listener_rule" "service_b" {
 }
 
 # Service Discovery Private DNS Namespace
-resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {
-  name = "fast-api-namespace"
-  vpc  = data.aws_vpc.default_vpc.id
+resource "aws_service_discovery_http_namespace" "fast_api_http_ns" {
+  name        = "fast-api-namespace"
+  description = "HTTP namespace for ECS Service Connect"
 }
 
 ############################ ECS-Role-Policy-Permission ##################################  
@@ -520,13 +520,39 @@ resource "aws_iam_role_policy_attachment" "ecs_service_connect_service_discovery
   policy_arn = "arn:aws:iam::aws:policy/AWSCloudMapFullAccess"
 }
 
+resource "aws_iam_policy" "ecs_exec_policy" {
+  name        = "ecs-exec-policy"
+  description = "Allows ECS tasks to be accessed via ECS Exec (Session Manager)"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_exec_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.ecs_exec_policy.arn
+}
+
 ################################ ECS-Service ########################################
 # created ECS Cluster 
 resource "aws_ecs_cluster" "ecs-cluster" {
   name = "fast-api-cluster"
 
   service_connect_defaults {
-    namespace = aws_service_discovery_private_dns_namespace.private_dns_namespace.arn
+    namespace = aws_service_discovery_http_namespace.fast_api_http_ns.arn
   }
 
   configuration {
@@ -666,7 +692,7 @@ resource "aws_ecs_service" "ecs_service_a" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = aws_service_discovery_private_dns_namespace.private_dns_namespace.name
+    namespace = aws_service_discovery_http_namespace.fast_api_http_ns.arn
     
     service {
       port_name      = "service-a-port"
@@ -715,7 +741,7 @@ resource "aws_ecs_service" "ecs_service_b" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = aws_service_discovery_private_dns_namespace.private_dns_namespace.name
+    namespace = aws_service_discovery_http_namespace.fast_api_http_ns.arn
     
     service {
       port_name      = "service-b-port"
