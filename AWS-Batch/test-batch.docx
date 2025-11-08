@@ -1,0 +1,12 @@
+aws batch submit-job \
+  --job-name hello-job \
+  --job-queue devops-dev-java-microservice-job-queue \
+  --job-definition devops-dev-java-microservice-batch-job-definition
+
+
+aws batch submit-job \
+  --job-name hello-job \
+  --job-queue devops-dev-python-microservice-job-queue \
+  --job-definition devops-dev-python-microservice-batch-job-definition
+
+
