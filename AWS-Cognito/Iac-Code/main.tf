@@ -272,3 +272,34 @@ resource "aws_cognito_user" "test_user" {
 
   depends_on = [aws_cognito_user_pool.cognito_user_pool_data]
 }
+
+variable "create_cognito_user" {
+  type = bool
+  default = true
+}
+
+variable "cognito_user" {
+  type = list(string)
+  default = ["rd@gmail.com" ,"rohit@gmail.com"]
+}
+
+###################### Output #######################
+output "lower_environment" {
+  value = var.create_cognito_user
+}
+output "cognito_user_pool_id" {
+  value = aws_cognito_user_pool.cognito_user_pool_data.id
+  sensitive = true
+}
+output "cognito_user_list" {
+  value = var.cognito_user
+  sensitive = false
+}
+
+output "aws_region" {
+  value = var.awsregion
+}
+
+output "cognito_admin_group" {
+  value = keys(local.project_development_group_definitions)[0]
+}
