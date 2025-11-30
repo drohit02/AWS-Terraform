@@ -1,10 +1,11 @@
+# Stage 1: Build
 FROM node:lts-alpine as builder
 
 WORKDIR /app
 
-ENV PATH = /app/node_modules/.bin:$PATH
+ENV PATH=/app/node_modules/.bin:$PATH
 
-COPY pakage.json pakage-lock.json /app/
+COPY package.json package-lock.json /app/
 
 RUN apk add --no-cache --virtual .gyp \
     python3 \
@@ -13,21 +14,21 @@ RUN apk add --no-cache --virtual .gyp \
 
 RUN npm cache clean --force
 
-RUN npm install -g serve@13.0.4
 RUN npm clean install --silent
 
 COPY . /app/
 
-RUN npm run builde
+RUN npm run build
 
+# Stage 2: Production
 FROM nginx:1.29-bookworm
 
 WORKDIR /usr/share/nginx/html
 
 COPY --from=builder /app/build /usr/share/nginx/html
 
-#COPY --from=builder /app/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/nginx.conf /etc/nginx/conf.d/default.conf
 
-Expose 80
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
