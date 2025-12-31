@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    container_name: opensearch-local
+    environment:
+      - cluster.name=local-cluster
+      - node.name=local-node
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock: -1
+      nofile: 65536
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - opensearch-net
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.1
+    container_name: opensearch-dashboards-local
+    environment:
+      - OPENSEARCH_HOSTS=http://opensearch:9200
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5601:5601"
+    depends_on:
+      - opensearch
+    networks:
+      - opensearch-net
+
+volumes:
+  opensearch-data:
+
+networks:
+  opensearch-net:
+    driver: bridge
